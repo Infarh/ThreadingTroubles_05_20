@@ -69,22 +69,36 @@ namespace ThreadingTroubles
             //        words_count += count;
             //});
 
-            var start_time = DateTime.Now;
+            //var start_time = DateTime.Now;
             var timer = new Stopwatch();
+            //timer.Start();
+            //Parallel.For(0, files.Length, i =>
+            //{
+            //    var file = files[i];
+            //    var count = GetWordsCount(file);
+            //    lock (files)
+            //        words_count += count;
+            //});
+            //timer.Stop();
+            ////var end_time = DateTime.Now;
+
+            //Console.WriteLine("Число слов {0} - параллельно {1}", words_count, /*end_time - start_time*/ timer.Elapsed);
+
+            timer.Reset();
             timer.Start();
-            Parallel.For(0, files.Length, i =>
-            {
-                var file = files[i];
-                var count = GetWordsCount(file);
-                lock (files)
-                    words_count += count;
-            });
+            var words_count_linq = data_directory.GetFiles("*.txt").Sum(GetWordsCount);
             timer.Stop();
-            //var end_time = DateTime.Now;
 
+            Console.WriteLine("Число слов {0} - linq {1}", words_count_linq, timer.Elapsed);
 
+            timer.Reset();
+            timer.Start();
+            var words_count_linq_parallel = data_directory.GetFiles("*.txt")
+               .AsParallel()
+               .Sum(GetWordsCount);
+            timer.Stop();
 
-            Console.WriteLine("Число слов {0} - параллельно {1}", words_count, /*end_time - start_time*/ timer.Elapsed);
+            Console.WriteLine("Число слов {0} - linq + TPL {1}", words_count_linq_parallel, timer.Elapsed);
 
             Console.ReadLine();
         }
