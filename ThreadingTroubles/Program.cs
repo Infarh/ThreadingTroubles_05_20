@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using System.IO;
+using System.Threading;
 
 namespace ThreadingTroubles
 {
@@ -17,19 +18,37 @@ namespace ThreadingTroubles
             var data_directory = new DirectoryInfo(data_dir);
 
             var words_count = 0;
-            foreach (var file in data_directory.GetFiles())
+            foreach (var file in data_directory.GetFiles()) // 468 152
             {
                 Console.WriteLine("{0} - {1}kb", file.Name, file.Length / 1024.0);
 
                 words_count += GetWordsCount(file);
             }
 
-            Console.WriteLine("Число слов {0}", words_count);
+            Console.WriteLine("Число слов {0} - последовательно", words_count);
+
+
+            var files = data_directory.GetFiles();
+
+            var threads = new Thread[files.Length];
+            words_count = 0;
+            for (var i = 0; i < threads.Length; i++) //127 912
+            {
+                var file_to_process = files[i];
+                threads[i] = new Thread(() => words_count = words_count + GetWordsCount(file_to_process));
+                threads[i].Start();
+            }
+
+
+            for (var i = 0; i < threads.Length; i++)
+                threads[i].Join();
+
+            Console.WriteLine("Число слов {0} параллельно", words_count);
 
             Console.ReadLine();
         }
 
-        private static char[] __Separators = { ' ', '.', ',', '!', ';', '-', '(', ')', '[', ']', '{', '}' };
+        private static readonly char[] __Separators = { ' ', '.', ',', '!', ';', '-', '(', ')', '[', ']', '{', '}' };
 
         private static int GetWordsCount(FileInfo file)
         {
