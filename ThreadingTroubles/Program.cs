@@ -58,21 +58,27 @@ namespace ThreadingTroubles
 
         private static readonly char[] __Separators = { ' ', '.', ',', '!', ';', '-', '(', ')', '[', ']', '{', '}' };
 
+        private static readonly object __LockObject = new object();
         private static void PrintConsoleData(string Message, int Count, int Timeout = 10)
         {
             var thread_id = Thread.CurrentThread.ManagedThreadId;
-            Console.WriteLine("Поток {0} запущен", thread_id);
+            lock (__LockObject)
+                Console.WriteLine("Поток {0} запущен", thread_id);
 
             for (var i = 0; i < Count; i++)
             {
-                Console.Write("{0,4}:", i);
-                Console.Write(Message);
-                Console.WriteLine(" - thread id:{0}", thread_id);
+                lock (__LockObject)
+                {
+                    Console.Write("{0,4}:", i);
+                    Console.Write(Message);
+                    Console.WriteLine(" - thread id:{0}", thread_id);
+                }
 
                 Thread.Sleep(Timeout);
             }
 
-            Console.WriteLine("Поток {0} завершён", thread_id);
+            lock (__LockObject)
+                Console.WriteLine("Поток {0} завершён", thread_id);
         }
 
         private static int GetWordsCount(FileInfo file)
