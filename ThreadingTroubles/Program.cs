@@ -15,43 +15,49 @@ namespace ThreadingTroubles
 
         static void Main(string[] args)
         {
-            //var data_directory = new DirectoryInfo(data_dir);
+            var data_directory = new DirectoryInfo(data_dir);
 
-            //var words_count = 0;
-            //foreach (var file in data_directory.GetFiles()) // 468 152
-            //{
-            //    Console.WriteLine("{0} - {1}kb", file.Name, file.Length / 1024.0);
-
-            //    words_count += GetWordsCount(file);
-            //}
-
-            //Console.WriteLine("Число слов {0} - последовательно", words_count);
-
-
-            //var files = data_directory.GetFiles();
-
-            //var threads = new Thread[files.Length];
-            //words_count = 0;
-            //for (var i = 0; i < threads.Length; i++) //127 912
-            //{
-            //    var file_to_process = files[i];
-            //    threads[i] = new Thread(() => words_count = words_count + GetWordsCount(file_to_process));
-            //    threads[i].Start();
-            //}
-
-            //for (var i = 0; i < threads.Length; i++)
-            //    threads[i].Join();
-
-            //Console.WriteLine("Число слов {0} параллельно", words_count);
-
-            var print_threads = new Thread[10];
-            for (var i = 0; i < print_threads.Length; i++)
+            var words_count = 0;
+            foreach (var file in data_directory.GetFiles()) // 468 152
             {
-                var message = $"Thread {i + 1} message";
-                var thread = new Thread(() => PrintConsoleData(message, 10, 0));
-                thread.Start();
-                print_threads[i] = thread;
+                Console.WriteLine("{0} - {1}kb", file.Name, file.Length / 1024.0);
+
+                words_count += GetWordsCount(file);
             }
+
+            Console.WriteLine("Число слов {0} - последовательно", words_count);
+
+
+            var files = data_directory.GetFiles();
+
+            var threads = new Thread[files.Length];
+            words_count = 0;
+            for (var i = 0; i < threads.Length; i++) //127 912
+            {
+                var file_to_process = files[i];
+                threads[i] = new Thread(
+                    () =>
+                    {
+                        var count = GetWordsCount(file_to_process);
+                        lock (threads)
+                            words_count += count;
+                    });
+                threads[i].Start();
+            }
+
+            for (var i = 0; i < threads.Length; i++)
+                threads[i].Join();
+
+            Console.WriteLine("Число слов {0} параллельно", words_count);
+
+            //var print_threads = new Thread[10];
+            //for (var i = 0; i < print_threads.Length; i++)
+            //{
+            //    var message = $"Thread {i + 1} message";
+            //    var thread = new Thread(() => PrintConsoleData(message, 10, 0));
+            //    thread.Start();
+            //    print_threads[i] = thread;
+            //}
 
             Console.ReadLine();
         }
