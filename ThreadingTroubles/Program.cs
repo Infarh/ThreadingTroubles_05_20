@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -61,13 +62,29 @@ namespace ThreadingTroubles
 
             //Task
             words_count = 0;
-            Parallel.ForEach(files, file =>
+            //Parallel.ForEach(files, file =>
+            //{
+            //    var count = GetWordsCount(file);
+            //    lock (files) 
+            //        words_count += count;
+            //});
+
+            var start_time = DateTime.Now;
+            var timer = new Stopwatch();
+            timer.Start();
+            Parallel.For(0, files.Length, i =>
             {
+                var file = files[i];
                 var count = GetWordsCount(file);
-                lock (files) 
+                lock (files)
                     words_count += count;
             });
-            Console.WriteLine("Число слов {0} - параллельно", words_count);
+            timer.Stop();
+            //var end_time = DateTime.Now;
+
+
+
+            Console.WriteLine("Число слов {0} - параллельно {1}", words_count, /*end_time - start_time*/ timer.Elapsed);
 
             Console.ReadLine();
         }
