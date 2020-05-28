@@ -56,7 +56,7 @@ namespace ThreadingTroubles
                     Console.WriteLine("Поток {0} запущен и ждёт разрешения.", index);
                     Thread.Sleep(500);
 
-                    manual_reset_event.WaitOne();
+                    auto_reset_event.WaitOne();
 
                     Thread.Sleep(500);
                     Console.WriteLine("Поток {0} выполнил свою работу.", index);
@@ -66,9 +66,12 @@ namespace ThreadingTroubles
             }
 
             Console.WriteLine("Главный поток готов разрешить работу...");
-            Console.ReadLine();
 
-            manual_reset_event.Set();
+            for (var i = 0; i < threads.Length; i++)
+            {
+                Console.ReadLine();
+                auto_reset_event.Set();
+            }
 
             Console.WriteLine("Главный поток завершил свою работу!");
             Console.ReadLine();
