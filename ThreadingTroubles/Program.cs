@@ -19,88 +19,96 @@ namespace ThreadingTroubles
             var data_directory = new DirectoryInfo(data_dir);
 
             var words_count = 0;
-            //foreach (var file in data_directory.GetFiles()) // 468 152
-            //{
-            //    Console.WriteLine("{0} - {1}kb", file.Name, file.Length / 1024.0);
-
-            //    words_count += GetWordsCount(file);
-            //}
-
-            //Console.WriteLine("Число слов {0} - последовательно", words_count);
-
+          
 
             var files = data_directory.GetFiles();
 
-            //var threads = new Thread[files.Length];
-            //words_count = 0;
-            //for (var i = 0; i < threads.Length; i++) //127 912
-            //{
-            //    var file_to_process = files[i];
-            //    threads[i] = new Thread(
-            //        () =>
-            //        {
-            //            var count = GetWordsCount(file_to_process);
-            //            lock (threads)
-            //                words_count += count;
-            //        });
-            //    threads[i].Start();
-            //}
-
-            //for (var i = 0; i < threads.Length; i++)
-            //    threads[i].Join();
-
-            //Console.WriteLine("Число слов {0} - параллельно", words_count);
-
-            //var print_threads = new Thread[10];
-            //for (var i = 0; i < print_threads.Length; i++)
-            //{
-            //    var message = $"Thread {i + 1} message";
-            //    var thread = new Thread(() => PrintConsoleData(message, 10, 0));
-            //    thread.Start();
-            //    print_threads[i] = thread;
-            //}
-
-            //Task
-            words_count = 0;
-            //Parallel.ForEach(files, file =>
-            //{
-            //    var count = GetWordsCount(file);
-            //    lock (files) 
-            //        words_count += count;
-            //});
-
-            //var start_time = DateTime.Now;
             var timer = new Stopwatch();
-            //timer.Start();
-            //Parallel.For(0, files.Length, i =>
+
+            var manual_reset_event = new ManualResetEvent(false);
+            var auto_reset_event = new AutoResetEvent(false);
+
+            //var thread = new Thread(() =>
             //{
-            //    var file = files[i];
-            //    var count = GetWordsCount(file);
-            //    lock (files)
-            //        words_count += count;
+            //    Console.WriteLine("Вторичный поток стартовал!");
+            //    Thread.Sleep(500);
+
+            //    Console.WriteLine("Вторичный поток ждёт разрешения на дальнейшую работу...");
+            //    manual_reset_event.WaitOne();
+            //    Console.WriteLine("\t разрешение получено!");
+
+            //    Thread.Sleep(500);
+            //    Console.WriteLine("Вторичный поток завершился!");
             //});
-            //timer.Stop();
-            ////var end_time = DateTime.Now;
+            //thread.Start();
 
-            //Console.WriteLine("Число слов {0} - параллельно {1}", words_count, /*end_time - start_time*/ timer.Elapsed);
+            //Console.WriteLine("Главный поток готов возобновить работу вторичного...");
+            //Console.ReadLine();
+            //manual_reset_event.Set();
 
-            timer.Reset();
-            timer.Start();
-            var words_count_linq = data_directory.GetFiles("*.txt").Sum(GetWordsCount);
-            timer.Stop();
+            var threads = new Thread[10];
 
-            Console.WriteLine("Число слов {0} - linq {1}", words_count_linq, timer.Elapsed);
+            for (var i = 0; i < threads.Length; i++)
+            {
+                var index = i;
+                var thread = new Thread(() =>
+                {
+                    Console.WriteLine("Поток {0} запущен и ждёт разрешения.", index);
+                    Thread.Sleep(500);
 
-            timer.Reset();
-            timer.Start();
-            var words_count_linq_parallel = data_directory.GetFiles("*.txt")
-               .AsParallel()
-               .Sum(GetWordsCount);
-            timer.Stop();
+                    auto_reset_event.WaitOne();
 
-            Console.WriteLine("Число слов {0} - linq + TPL {1}", words_count_linq_parallel, timer.Elapsed);
+                    Thread.Sleep(500);
+                    Console.WriteLine("Поток {0} выполнил свою работу.", index);
+                });
+                thread.Start();
+                threads[i] = thread;
+            }
 
+            Console.WriteLine("Главный поток готов разрешить работу...");
+
+            for (var i = 0; i < threads.Length; i++)
+            {
+                Console.ReadLine();
+                auto_reset_event.Set();
+            }
+
+            var sync_root = new object();
+            lock (sync_root)
+            {
+
+            }
+
+            Monitor.Enter(sync_root);
+            try
+            {
+                // Критическая секция
+            }
+            finally
+            {
+                Monitor.Exit(sync_root);
+            }
+
+            //var mutex = new Mutex(true, "Mutex name");
+            //mutex.WaitOne();
+            //mutex.ReleaseMutex();
+
+             var semaphore = new Semaphore(0, 10); // Семафор на 10 входов
+             semaphore.WaitOne();
+             //Критическая секция
+             semaphore.Release();
+
+            Console.WriteLine("Главный поток завершил свою работу!");
             Console.ReadLine();
+        }
+
+        private static void ThreadMethod()
+        {
+            Console.WriteLine("Вторичный поток стартовал!");
+
+            Thread.Sleep(1000);
+
+            Console.WriteLine("Вторичный поток завершился!");
         }
 
         private static readonly char[] __Separators = { ' ', '.', ',', '!', ';', '-', '(', ')', '[', ']', '{', '}' };
