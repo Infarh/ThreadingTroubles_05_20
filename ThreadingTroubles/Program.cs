@@ -73,6 +73,23 @@ namespace ThreadingTroubles
                 auto_reset_event.Set();
             }
 
+            var sync_root = new object();
+            lock (sync_root)
+            {
+
+            }
+
+            Monitor.Enter(sync_root);
+            try
+            {
+                // Критическая секция
+            }
+            finally
+            {
+                Monitor.Exit(sync_root);
+            }
+
+
             Console.WriteLine("Главный поток завершил свою работу!");
             Console.ReadLine();
         }
