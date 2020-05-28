@@ -27,33 +27,60 @@ namespace ThreadingTroublesWPF
             InitializeComponent();
         }
 
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            _OperationCancellation?.Cancel();
+        }
+
+        private CancellationTokenSource _OperationCancellation;
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            var button = (Button) sender;
+            var button = (Button)sender;
             button.IsEnabled = false;
+
+            _OperationCancellation?.Cancel();
+            var cancellation = new CancellationTokenSource();
+            _OperationCancellation = cancellation;
 
             //DoProcess();
             //DoProcessInThread();
 
             //var result = await DoWorkAsync(100, 100);
-            var progress = new Progress<double>(p => ProgressBar.Value = p);
+            IProgress<double> progress = new Progress<double>(p => ProgressBar.Value = p);
 
-            var result = await Task.Run(() => DoWorkAsync(100, 100, progress));
+            var cancel = cancellation.Token;
+            try
+            {
+                var result = await Task.Run(() => DoWorkAsync(100, 100, progress, cancel), cancel);
 
-            ResultViewer.Text = result;
+                ResultViewer.Text = result;
+            }
+            catch (TaskCanceledException)
+            {
+                Debug.WriteLine("Операция вычисления отменена!");
+                progress.Report(0);
+            }
             button.IsEnabled = true;
         }
 
-        private static async Task<string> DoWorkAsync(int IterationCount, int Timeout, IProgress<double> Progress = null)
+        private static async Task<string> DoWorkAsync(
+            int IterationCount, int Timeout,
+            IProgress<double> Progress = null,
+            CancellationToken Cancel = default)
         {
+            Cancel.ThrowIfCancellationRequested();
+
             var thread_id = Thread.CurrentThread.ManagedThreadId;
             for (var i = 0; i < IterationCount; i++)
             {
+                Cancel.ThrowIfCancellationRequested();
+
                 Debug.WriteLine($"Итерация {i} - поток {thread_id}");
                 Progress?.Report((double)i / IterationCount);
-                await Task.Delay(Timeout);
+                await Task.Delay(Timeout, Cancel);
             }
 
+            Cancel.ThrowIfCancellationRequested();
             return "Result " + DateTime.Now.ToString("hh:mm:ss");
         }
 
