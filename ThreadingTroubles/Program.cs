@@ -28,22 +28,46 @@ namespace ThreadingTroubles
             var manual_reset_event = new ManualResetEvent(false);
             var auto_reset_event = new AutoResetEvent(false);
 
-            var thread = new Thread(() =>
+            //var thread = new Thread(() =>
+            //{
+            //    Console.WriteLine("Вторичный поток стартовал!");
+            //    Thread.Sleep(500);
+
+            //    Console.WriteLine("Вторичный поток ждёт разрешения на дальнейшую работу...");
+            //    manual_reset_event.WaitOne();
+            //    Console.WriteLine("\t разрешение получено!");
+
+            //    Thread.Sleep(500);
+            //    Console.WriteLine("Вторичный поток завершился!");
+            //});
+            //thread.Start();
+
+            //Console.WriteLine("Главный поток готов возобновить работу вторичного...");
+            //Console.ReadLine();
+            //manual_reset_event.Set();
+
+            var threads = new Thread[10];
+
+            for (var i = 0; i < threads.Length; i++)
             {
-                Console.WriteLine("Вторичный поток стартовал!");
-                Thread.Sleep(500);
+                var index = i;
+                var thread = new Thread(() =>
+                {
+                    Console.WriteLine("Поток {0} запущен и ждёт разрешения.", index);
+                    Thread.Sleep(500);
 
-                Console.WriteLine("Вторичный поток ждёт разрешения на дальнейшую работу...");
-                manual_reset_event.WaitOne();
-                Console.WriteLine("\t разрешение получено!");
+                    manual_reset_event.WaitOne();
 
-                Thread.Sleep(500);
-                Console.WriteLine("Вторичный поток завершился!");
-            });
-            thread.Start();
+                    Thread.Sleep(500);
+                    Console.WriteLine("Поток {0} выполнил свою работу.", index);
+                });
+                thread.Start();
+                threads[i] = thread;
+            }
 
-            Console.WriteLine("Главный поток готов возобновить работу вторичного...");
+            Console.WriteLine("Главный поток готов разрешить работу...");
             Console.ReadLine();
+
             manual_reset_event.Set();
 
             Console.WriteLine("Главный поток завершил свою работу!");
