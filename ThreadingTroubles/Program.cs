@@ -24,11 +24,39 @@ namespace ThreadingTroubles
             var files = data_directory.GetFiles();
 
             var timer = new Stopwatch();
-            
 
+            var manual_reset_event = new ManualResetEvent(false);
+            var auto_reset_event = new AutoResetEvent(false);
 
+            var thread = new Thread(() =>
+            {
+                Console.WriteLine("Вторичный поток стартовал!");
+                Thread.Sleep(500);
 
+                Console.WriteLine("Вторичный поток ждёт разрешения на дальнейшую работу...");
+                manual_reset_event.WaitOne();
+                Console.WriteLine("\t разрешение получено!");
+
+                Thread.Sleep(500);
+                Console.WriteLine("Вторичный поток завершился!");
+            });
+            thread.Start();
+
+            Console.WriteLine("Главный поток готов возобновить работу вторичного...");
             Console.ReadLine();
+            manual_reset_event.Set();
+
+            Console.WriteLine("Главный поток завершил свою работу!");
+            Console.ReadLine();
+        }
+
+        private static void ThreadMethod()
+        {
+            Console.WriteLine("Вторичный поток стартовал!");
+
+            Thread.Sleep(1000);
+
+            Console.WriteLine("Вторичный поток завершился!");
         }
 
         private static readonly char[] __Separators = { ' ', '.', ',', '!', ';', '-', '(', ')', '[', ']', '{', '}' };
