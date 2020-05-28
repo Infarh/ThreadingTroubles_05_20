@@ -27,10 +27,34 @@ namespace ThreadingTroublesWPF
             InitializeComponent();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private async void Button_Click(object sender, RoutedEventArgs e)
         {
+            var button = (Button) sender;
+            button.IsEnabled = false;
+
             //DoProcess();
-            DoProcessInThread();
+            //DoProcessInThread();
+
+            //var result = await DoWorkAsync(100, 100);
+            var progress = new Progress<double>(p => ProgressBar.Value = p);
+
+            var result = await Task.Run(() => DoWorkAsync(100, 100, progress));
+
+            ResultViewer.Text = result;
+            button.IsEnabled = true;
+        }
+
+        private static async Task<string> DoWorkAsync(int IterationCount, int Timeout, IProgress<double> Progress = null)
+        {
+            var thread_id = Thread.CurrentThread.ManagedThreadId;
+            for (var i = 0; i < IterationCount; i++)
+            {
+                Debug.WriteLine($"Итерация {i} - поток {thread_id}");
+                Progress?.Report((double)i / IterationCount);
+                await Task.Delay(Timeout);
+            }
+
+            return "Result " + DateTime.Now.ToString("hh:mm:ss");
         }
 
         private void DoProcessInThread()
@@ -68,9 +92,10 @@ namespace ThreadingTroublesWPF
 
         private static string DoWork(int IterationCount, int Timeout, Action<double> ProgressInfo = null)
         {
+            var thread_id = Thread.CurrentThread.ManagedThreadId;
             for (var i = 0; i < IterationCount; i++)
             {
-                Debug.WriteLine($"Итерация {i}");
+                Debug.WriteLine($"Итерация {i} - поток {thread_id}");
                 ProgressInfo?.Invoke((double)i / IterationCount);
                 Thread.Sleep(Timeout);
             }
