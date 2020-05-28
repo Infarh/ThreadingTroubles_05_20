@@ -13,6 +13,11 @@
                    TextWrapping="Wrap"
                    VerticalAlignment="Top"/>
         <Button Content="Button" HorizontalAlignment="Left" Margin="197,117,0,0" VerticalAlignment="Top" Height="54" Width="122" Click="Button_Click"/>
+        <ProgressBar Name="ProgressBar" 
+                     Maximum="1"
+                     HorizontalAlignment="Left"
+                     Height="20" Margin="188,191,0,0" 
+                     VerticalAlignment="Top" Width="140"/>
 
     </Grid>
 </Window>

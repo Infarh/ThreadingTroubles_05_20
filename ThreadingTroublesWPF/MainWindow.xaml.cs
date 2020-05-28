@@ -29,19 +29,53 @@ namespace ThreadingTroublesWPF
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            var result = DoWork(100, 100);
-
-            ResultViewer.Text = result;
+            //DoProcess();
+            DoProcessInThread();
         }
 
-        private string DoWork(int IterationCount, int Timeout)
+        private void DoProcessInThread()
+        {
+            var thread = new Thread(DoProcess)
+            {
+                IsBackground = true
+            };
+            thread.Start();
+        }
+
+        private void ProgressInformator(double Progress)
+        {
+            if (Dispatcher.CheckAccess())
+                ProgressBar.Value = Progress;
+            else
+                Dispatcher.Invoke(() => { ProgressBar.Value = Progress; });
+        }
+
+        private void DoProcess()
+        {
+            var result = DoWork(100, 100, ProgressInformator);
+            //ResultViewer.Text = result;
+            //Application.Current.Dispatcher
+            if (ResultViewer.Dispatcher.CheckAccess())
+            {
+                ResultViewer.Text = result;
+            }
+            else
+                ResultViewer.Dispatcher.Invoke(() =>
+                {
+                    ResultViewer.Text = result;
+                });
+        }
+
+        private static string DoWork(int IterationCount, int Timeout, Action<double> ProgressInfo = null)
         {
             for (var i = 0; i < IterationCount; i++)
             {
                 Debug.WriteLine($"Итерация {i}");
+                ProgressInfo?.Invoke((double)i / IterationCount);
                 Thread.Sleep(Timeout);
             }
 
+            ProgressInfo?.Invoke(1);
             return "Result " + DateTime.Now.ToString("hh:mm:ss");
         }
     }
