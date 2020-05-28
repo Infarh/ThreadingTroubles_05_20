@@ -89,6 +89,14 @@ namespace ThreadingTroubles
                 Monitor.Exit(sync_root);
             }
 
+            //var mutex = new Mutex(true, "Mutex name");
+            //mutex.WaitOne();
+            //mutex.ReleaseMutex();
+
+             var semaphore = new Semaphore(0, 10); // Семафор на 10 входов
+             semaphore.WaitOne();
+             //Критическая секция
+             semaphore.Release();
 
             Console.WriteLine("Главный поток завершил свою работу!");
             Console.ReadLine();
